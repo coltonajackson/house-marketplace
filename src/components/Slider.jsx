@@ -1,71 +1,64 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore'
-import { db } from '../firebase.config'
-import SwiperCore, { Navigation, Pagination, Scrollbar, A11y } from 'swiper'
-import { Swiper, SwiperSlide } from 'swiper/react'
-import 'swiper/swiper-bundle.css'
-import Spinner from './Spinner'
-SwiperCore.use([Navigation, Pagination, Scrollbar, A11y])
+// Import React Modules
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+// Import Firebase Modules
+import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { db } from '../firebase.config';
+// Import NPM Modules
+import SwiperCore, { Navigation, Pagination, Scrollbar, A11y } from 'swiper';
+import { Swiper, SwiperSlide } from 'swiper/react';
+// Import CSS
+import 'swiper/swiper-bundle.min.css';
+// Import Components
+import Spinner from './Spinner';
+// Use SwiperCore
+SwiperCore.use([Navigation, Pagination, Scrollbar, A11y]);
 
 function Slider() {
-  const [loading, setLoading] = useState(true)
-  const [listings, setListings] = useState(null)
-
-  const navigate = useNavigate()
+  const [loading, setLoading] = useState(true);
+  const [listings, setListings] = useState(null);
+  
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchListings = async () => {
-      const listingsRef = collection(db, 'listings')
-      const q = query(listingsRef, orderBy('timestamp', 'desc'), limit(5))
-      const querySnap = await getDocs(q)
-
-      let listings = []
-
+      const listingsRef = collection(db, 'listings');
+      const q = query(listingsRef, orderBy('timestamp', 'desc'), limit(5));
+      const querySnap = await getDocs(q);
+      
+      let listings = [];
       querySnap.forEach((doc) => {
         return listings.push({
           id: doc.id,
-          data: doc.data(),
-        })
-      })
-
-      setListings(listings)
-      setLoading(false)
+          data: doc.data()
+        });
+      });
+      setListings(listings);
+      setLoading(false);
     }
-
-    fetchListings()
-  }, [])
+    fetchListings();
+  }, []);
 
   if (loading) {
     return <Spinner />
   }
-
   if (listings.length === 0) {
     return <></>
   }
-
-  return (
-    listings && (
+  if (listings) {
+    return (
       <>
-        <p className='exploreHeading'>Recommended</p>
-
+        <p className="exploreHeading">Recommended</p>
         <Swiper slidesPerView={1} pagination={{ clickable: true }}>
           {listings.map(({ data, id }) => (
-            <SwiperSlide
-              key={id}
-              onClick={() => navigate(`/category/${data.type}/${id}`)}
-            >
-              <div
-                style={{
-                  background: `url(${data.imgUrls[0]}) center no-repeat`,
-                  backgroundSize: 'cover',
-                }}
-                className='swiperSlideDiv'
-              >
-                <p className='swiperSlideText'>{data.name}</p>
-                <p className='swiperSlidePrice'>
-                  ${data.discountedPrice ?? data.regularPrice}{' '}
-                  {data.type === 'rent' && '/ month'}
+            <SwiperSlide key={id} onClick={() => navigate(`/category/${data.type}/${id}`)}>
+              <div style={{ background: `url(${data.imgUrls[0]}) center no-repeat`, 
+                backgroundSize: 'cover' }} className="swiperSlideDiv">
+                <p className="swiperSlideText">{data.name}</p>
+                <p className="swiperSlidePrice">
+                  ${data.discountedPrice ? data.discountedPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')  
+                    : data.regularPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  {data.type === 'rent' && ' / month'}
                 </p>
               </div>
             </SwiperSlide>
@@ -73,7 +66,7 @@ function Slider() {
         </Swiper>
       </>
     )
-  )
+  }
 }
 
-export default Slider
+export default Slider;
